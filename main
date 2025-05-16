@@ -1,0 +1,81 @@
+//Science Olympiad Robot Tour with 4 28BYJ-48 stepper motors and Uln2003 drivers
+// Include the AccelStepper Library
+#include <AccelStepper.h>
+
+#define FULLSTEP 4
+#define STEPS_PER_REV 4096  // For 28BYJ-48 motors
+#define MAX_SPEED 500
+#define MAX_ACCEL 200
+
+// Motor setup: AccelStepper(FULLSTEP, IN1, IN3, IN2, IN4)
+AccelStepper frontRight(FULLSTEP, 6, 8, 7, 9);
+AccelStepper frontLeft(FULLSTEP, 10, 12, 11, 13);
+AccelStepper rearRight(FULLSTEP, 43, 39, 41, 37);
+AccelStepper rearLeft(FULLSTEP, 53, 49, 45, 47);
+
+void setup() {
+  Serial.begin(9600);
+  
+  setupMotor(frontRight);
+  setupMotor(frontLeft);
+  setupMotor(rearRight);
+  setupMotor(rearLeft);
+
+  turnLeft(6);      // 2 full rotations forward
+  delay(1000);
+
+  turnRight(1);     // 2 full rotations backward
+
+}
+
+void loop() {}
+
+void setupMotor(AccelStepper &stepper) {
+  stepper.setMaxSpeed(MAX_SPEED);
+  stepper.setAcceleration(MAX_ACCEL);
+}
+
+void forward(int rotations) {
+  long steps = rotations * STEPS_PER_REV;
+  moveAll(steps, steps, steps, steps);
+  runUntilDone();
+}
+
+void backward(int rotations) {
+  long steps = rotations * STEPS_PER_REV;
+  moveAll(-steps, -steps, -steps, -steps);
+  runUntilDone();
+}
+
+void turnLeft(int rotations) {
+  long steps = rotations * STEPS_PER_REV;
+  moveAll(-steps, steps, -steps, steps); // Left side backward, right side forward
+  runUntilDone();
+}
+
+void turnRight(int rotations) {
+  long steps = rotations * STEPS_PER_REV;
+  moveAll(steps, -steps, steps, -steps); // Left side forward, right side backward
+  runUntilDone();
+}
+
+void moveAll(long fl, long fr, long rl, long rr) {
+  frontLeft.moveTo(frontLeft.currentPosition() + fl);
+  frontRight.moveTo(frontRight.currentPosition() + fr);
+  rearLeft.moveTo(rearLeft.currentPosition() + rl);
+  rearRight.moveTo(rearRight.currentPosition() + rr);
+}
+
+void runUntilDone() {
+  while (
+    frontLeft.distanceToGo() != 0 ||
+    frontRight.distanceToGo() != 0 ||
+    rearLeft.distanceToGo() != 0 ||
+    rearRight.distanceToGo() != 0
+  ) {
+    frontLeft.run();
+    frontRight.run();
+    rearLeft.run();
+    rearRight.run();
+  }
+}
